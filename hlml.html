@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Robbery Search Minigame</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      overflow: hidden;
+    }
+
+    /* Fullscreen background image */
+    #fullscreen-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1; /* always behind everything */
+    }
+
+    #game {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 2;
+    }
+
+    .key-box {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 22px;
+    }
+
+    .key {
+      background: #fff;
+      color: #000;
+      padding: 6px 14px;
+      margin-right: 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    /* Progress bar */
+     #progress-container {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      display: none;
+      font-size: 14px;
+      font-weight: bold;
+      color: white;
+      background: rgba(0,0,0,0.6);
+      padding: 6px 10px;
+      min-width: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 2;
+    }
+    #progress-label {
+      flex-shrink: 0;
+    }
+    #progress-bar-bg {
+      flex-grow: 1;
+      margin-left: 10px;
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #e02727;
+      transition: width 0.15s linear;
+    }
+
+    #start-message {
+      font-size: 22px;
+    }
+
+    .orange { color: orange; font-weight: bold; }
+    .yellow { color: yellow; font-weight: bold; }
+    .danger { color: red; font-weight: bold; }
+
+    #stop-message {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      display: none;
+      z-index: 2;
+    }
+
+    /* Loot messages right */
+    #loot-messages-right {
+      position: absolute;
+      bottom: 100px;
+      right: 30px;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: flex-end;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .loot-right {
+      display: flex;
+      align-items: center;
+      background: rgba(0,0,0,0.8);
+      border: 2px solid #4ab3ff;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: bold;
+      opacity: 0;
+      transform: translateX(120%);
+      animation: slideInRight 3s ease forwards;
+      min-width: 280px;
+    }
+
+    .loot-icon {
+      width: 18px;
+      height: 18px;
+      background: #4ab3ff;
+      margin-right: 10px;
+      border-radius: 3px;
+    }
+
+    .loot-right span {
+      color: white;
+    }
+
+    @keyframes slideInRight {
+      0%   { transform: translateX(120%); opacity: 0; }
+      15%  { transform: translateX(0); opacity: 1; }
+      85%  { transform: translateX(0); opacity: 1; }
+      100% { transform: translateX(120%); opacity: 0; }
+    }
+
+    /* Loot feed left */
+    #loot-messages-left {
+      position: absolute;
+      bottom: 100px;
+      left: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .loot-left {
+      font-size: 18px;
+      margin-top: 6px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideUpLeft 8s ease forwards;
+    }
+
+    .loot-left span {
+      color: yellow;
+      font-weight: bold;
+    }
+
+    @keyframes slideUpLeft {
+      0%   { transform: translateY(20px); opacity: 0; }
+      15%  { transform: translateY(0); opacity: 1; }
+      85%  { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-20px); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ✅ Fullscreen image (always visible) -->
+  <img id="fullscreen-image" src="https://cdn.discordapp.com/attachments/1256362738557390858/1412262812977336361/overlay.png?ex=68b7a7bd&is=68b6563d&hm=bfa7f2aa9870e7f538f7bd05941c25e2ebe50fe7ae772e9d5a564e2c6b50b954&" alt="Overlay">
+
+  <div id="game">
+    <div id="start-message">
+      Press <span class="key">E</span> to <span class="orange">break open</span> the <span class="yellow">Container</span>
+    </div>
+
+    <div id="instructions" style="display:none;">
+      <div class="key-box">
+        <div id="current-key" class="key">?</div>
+        <span>to break in</span>
+      </div>
+      <div class="key-box">
+        <div class="key">Esc</div>
+        <span>to cancel</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="progress-container">
+    <span id="progress-label">Break in</span>
+    <div id="progress-bar-bg">
+      <div id="progress-bar"></div>
+    </div>
+  </div>
+
+  <div id="stop-message">
+    Press <span class="key">E</span> to stop <span class="danger">breaking in</span>
+  </div>
+
+  <div id="loot-messages-right"></div>
+  <div id="loot-messages-left"></div>
+
+  <script>
+    const allKeys = [
+      {name: "W", code: "KeyW"},
+      {name: "A", code: "KeyA"},
+      {name: "S", code: "KeyS"},
+      {name: "D", code: "KeyD"},
+      {name: "↑", code: "ArrowUp"},
+      {name: "↓", code: "ArrowDown"},
+      {name: "←", code: "ArrowLeft"},
+      {name: "→", code: "ArrowRight"},
+    ];
+
+    const lootPool = [
+      "Industrial Angle Grinder x1-x2","Industrial Towing Rope x1","Industrial Insullation Roll x1-x2",
+      "Cable Roll x1-x6","Toolbox x1-x3","Laptop x1-x2","Circuit Board x1-x3","USB (SSO Key) x1-x2",
+      "Blast Charge x1-x2","Remote Explosives x1-x2","Gold Nugget x1","Uncut Diamond (Large) x1",
+      "Uncut Diamond (Medium) x1","Uncut Diamond (Small) x1","Five Seven","Heavy Shotgun","Switchblade",
+      "Knuckle Duster","M9 Barreta","SNS Pistol","Pistol MK2","Uncut Sapphire x1-x4","Crowex Watch x1-x2",
+      "Uncut Ruby x1-x2","Crowex Pearl Necklace x1-x2","Crowex Earrings x1-x2","Designer Pants x1",
+      "Designer Glasses x1","Designer Shoes x1","Designer Top x1","Suitcase x1","Designer Suitcase x1",
+      "Widescreen TV","DES Module x1-x2","Glass Cutter x1","Industrial Drill x1","Drill x1",
+      "Industrial Ventilation Equipment x1","Furr coat x3-x6","Suppressor (Mod) x1",
+      "Crystal Meth Tray (Blue) x1","Crystal Meth Tray (Green) x1","Crystal Meth Tray (Clear) x1",
+      "Crystal Meth Tray (Cloudy) x1","Crystal Meth Tray (White) x1","Ketamine Tray x1",
+      "Meth Slab (Blue) x1","Meth Slab (Green) x1","Meth Slab (Clear) x1","Meth Slab (Cloudy) x1",
+      "Meth Slab (White) x1","Cocaine (Block) x1","Cocaine (Slab) x1","Cocaine (Brick) x1",
+      "Grip (Mod) x1-x2","Extended Mag (Mod) x1-x2","SMG Ammunation Box x1-x2",
+      "SMG Shell Casings (x30-x60) x1-x2","Rifle Ammunation Box x1-x2","Rifle Shell Casings (x30-x60) x1-x2",
+      "SMG Stock x1","SMG Receiver x1","SMG Barrel x1","SMG Handguard x1","Rifle Stock x1",
+      "Rifle Receiver x1","Rifle Handguard x1","Rifle Barrel x1","Blueprint (Weed Lockup) x1",
+      "Blueprint (Coke lab) x1"
+    ];
+
+    let currentPair = [];
+    let showingIndex = 0;
+    let progress = 0;
+    let intervalId = null;
+    let running = false;
+
+    const currentKeyEl = document.getElementById("current-key");
+    const progressBar = document.getElementById("progress-bar");
+    const progressContainer = document.getElementById("progress-container");
+    const startMessage = document.getElementById("start-message");
+    const instructions = document.getElementById("instructions");
+    const stopMessage = document.getElementById("stop-message");
+    const lootMessagesRight = document.getElementById("loot-messages-right");
+    const lootMessagesLeft = document.getElementById("loot-messages-left");
+
+    function pickPair() {
+      let first = allKeys[Math.floor(Math.random() * allKeys.length)];
+      let second;
+      do {
+        second = allKeys[Math.floor(Math.random() * allKeys.length)];
+      } while (second.code === first.code);
+      currentPair = [first, second];
+      showingIndex = 0;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      currentKeyEl.textContent = currentPair[showingIndex].name;
+    }
+
+    function randomizeQuantity(item) {
+      let match = item.match(/x(\d+)-x(\d+)/);
+      if (match) {
+        let min = parseInt(match[1]);
+        let max = parseInt(match[2]);
+        let num = Math.floor(Math.random() * (max - min + 1)) + min;
+        return item.replace(/x\d+-x\d+/, "x" + num);
+      }
+      match = item.match(/\(x\d+-x\d+\)/);
+      if (match) {
+        let min = parseInt(match[1]);
+        let max = parseInt(match[2]);
+        let num = Math.floor(Math.random() * (max - min + 1)) + min;
+        return item.replace(/\(x\d+-x\d+\)/, "(x" + num + ")");
+      }
+      return item;
+    }
+
+    function cleanName(item) {
+      let name = item.replace(/x\d+/, "");
+      name = name.replace(/x\d+-x\d+/, "");
+      name = name.replace(/\(x\d+-x\d+\)/, "");
+      return name.trim();
+    }
+
+    function showLoot() {
+      const chosen = [];
+      while (chosen.length < 4) {
+        let item = lootPool[Math.floor(Math.random() * lootPool.length)];
+        if (!chosen.includes(item)) chosen.push(item);
+      }
+
+      // Right messages: all 4 at once
+      chosen.forEach(item => {
+        const randomized = randomizeQuantity(item);
+        const amountMatch = randomized.match(/x(\d+)/);
+        const amount = amountMatch ? amountMatch[1] : "1";
+        const name = randomized.replace(/x\d+/, "").trim();
+
+        const elRight = document.createElement("div");
+        elRight.className = "loot-right";
+        elRight.innerHTML = `<div class="loot-icon"></div><span>+${amount} ${name.toUpperCase()}</span>`;
+        lootMessagesRight.appendChild(elRight);
+
+        setTimeout(() => {
+          lootMessagesRight.removeChild(elRight);
+        }, 3000);
+      });
+
+      // Left feed
+      chosen.forEach((item, i) => {
+        setTimeout(() => {
+          const elLeft = document.createElement("div");
+          elLeft.className = "loot-left";
+          elLeft.innerHTML = `You found a <span>${cleanName(item)}</span>`;
+          lootMessagesLeft.appendChild(elLeft);
+
+          setTimeout(() => {
+            lootMessagesLeft.removeChild(elLeft);
+          }, 8000);
+        }, i * 600);
+      });
+
+      // Final message
+      setTimeout(() => {
+        const elFinal = document.createElement("div");
+        elFinal.className = "loot-left";
+        elFinal.innerHTML = "You take what you can from the crate.";
+        lootMessagesLeft.appendChild(elFinal);
+
+        setTimeout(() => {
+          lootMessagesLeft.removeChild(elFinal);
+        }, 8000);
+      }, 3000);
+    }
+
+    function updateProgress(delta) {
+      progress = Math.max(0, Math.min(100, progress + delta));
+      progressBar.style.width = progress + "%";
+      if (progress >= 100) {
+        showLoot();
+        stopGame();
+      }
+    }
+
+    function startGame() {
+      running = true;
+      progress = 0;
+      progressBar.style.width = "0%";
+      startMessage.style.display = "none";
+      instructions.style.display = "block";
+      progressContainer.style.display = "flex";
+      stopMessage.style.display = "block";
+      pickPair();
+      intervalId = setInterval(() => pickPair(), 4000);
+    }
+
+    function stopGame() {
+      running = false;
+      clearInterval(intervalId);
+      intervalId = null;
+      startMessage.style.display = "block";
+      instructions.style.display = "none";
+      progressContainer.style.display = "none";
+      stopMessage.style.display = "none";
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (!running) {
+        if (e.code === "KeyE") startGame();
+        return;
+      }
+
+      if (e.code === "Escape" || e.code === "KeyE") {
+        stopGame();
+        return;
+      }
+
+      const currentKey = currentPair[showingIndex];
+      if (e.code === currentKey.code) {
+        updateProgress(0.2);
+        showingIndex = showingIndex === 0 ? 1 : 0;
+        updateDisplay();
+      } else {
+        updateProgress(-0.05);
+      }
+    });
+  </script>
+</body>
+</html>
