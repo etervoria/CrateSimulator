@@ -1,5 +1,5 @@
 # CrateSimulator
-Highlife Roleplay Crate Robbery Simulator — Made by **The Habibis**
+Highlife Roleplay Crate Robbery Simulator — Made by **The Habibis** 
 
 
 ### HighLife Roleplay is a serious GTA V roleplay community on the FiveM platform.
@@ -16,6 +16,11 @@ It provides a stable, engaging world where players can build stories, make conne
 
 
 
+<div align="center">
+  <span style="font-size:120px; font-weight:bold; color:rgba(200,200,200,0.2);">
+    MSE
+  </span>
+</div>
 
 
 
