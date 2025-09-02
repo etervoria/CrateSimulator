@@ -14,18 +14,6 @@ It provides a stable, engaging world where players can build stories, make conne
 [**BCSO/LSPD Are Active Click me**](hlml.html)
 
 
-
-
-<div align="center">
-  <span style="font-size:120px; font-weight:bold; color:rgba(200,200,200,0.2);">
-    MSE
-  </span>
-</div>
-
-
-
-
-
 ### 🤝 Sponsors
 We are proudly sponsored by:  
 
